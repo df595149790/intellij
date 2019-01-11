@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -140,11 +141,11 @@ public class UnpackedAars {
   }
 
   /** Refreshes any updated files in the cache. Does not add or remove any files */
-  void refresh() {
-    refresh(null, false);
+  void refresh(BlazeContext context) {
+    refresh(context, false);
   }
 
-  private void refresh(@Nullable BlazeContext context, boolean removeMissingFiles) {
+  private void refresh(BlazeContext context, boolean removeMissingFiles) {
     if (!enabled || jarTraits == null || aarTraits == null) {
       return;
     }
@@ -158,13 +159,16 @@ public class UnpackedAars {
       }
     }
 
-    FileCacheSynchronizer aarSynchronizer = new FileCacheSynchronizer(aarTraits);
-    if (!aarSynchronizer.synchronize(context, removeMissingFiles)) {
-      logger.warn("Unpacked AAR synchronization didn't complete");
-    }
-    FileCacheSynchronizer aarJarSynchronizer = new FileCacheSynchronizer(jarTraits);
-    if (!aarJarSynchronizer.synchronize(context, removeMissingFiles)) {
-      logger.warn("Unpacked AAR jar synchronization didn't complete");
+    try {
+      FileCacheSynchronizer aarSynchronizer = new FileCacheSynchronizer(aarTraits);
+      aarSynchronizer.synchronize(context, removeMissingFiles);
+      FileCacheSynchronizer aarJarSynchronizer = new FileCacheSynchronizer(jarTraits);
+      aarJarSynchronizer.synchronize(context, removeMissingFiles);
+    } catch (InterruptedException e) {
+      context.setCancelled();
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      logger.warn("Unpacked AAR synchronization didn't complete", e);
     }
   }
 
@@ -248,8 +252,8 @@ public class UnpackedAars {
     }
 
     @Override
-    public void refreshFiles(Project project) {
-      getInstance(project).refresh();
+    public void refreshFiles(Project project, BlazeContext context) {
+      getInstance(project).refresh(context);
     }
   }
 

@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.coverage.CoverageUtils;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.coverage.CoverageHelper;
 import com.intellij.coverage.CoverageRunnerData;
 import com.intellij.execution.ExecutionException;
@@ -87,7 +88,8 @@ public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
         (BlazeCoverageEnabledConfiguration) CoverageEnabledConfiguration.getOrCreate(blazeConfig);
 
     String coverageFilePath = config.getCoverageFilePath();
-    File blazeOutputFile = CoverageUtils.getOutputFile(root);
+    File blazeOutputFile =
+        CoverageUtils.getOutputFile(Blaze.getBuildSystem(env.getProject()), root);
 
     ProcessHandler handler = result.getProcessHandler();
     if (handler != null) {

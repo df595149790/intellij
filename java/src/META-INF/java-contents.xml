@@ -74,10 +74,11 @@
     <JavaLikeLanguage implementation="com.google.idea.blaze.java.sync.source.JavaLikeLanguage$Java"/>
     <JavaLikeLanguage implementation="com.google.idea.blaze.java.sync.source.AndroidJavaLikeLanguage"/>
     <TestContextProvider
-        implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestContextProvider"/>
-    <TestContextProvider
         implementation="com.google.idea.blaze.java.run.producers.JavaTestContextProvider"
         id="JavaTestContextProvider"/>
+    <TestContextProvider
+        implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestContextProvider"
+        order="after JavaTestContextProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

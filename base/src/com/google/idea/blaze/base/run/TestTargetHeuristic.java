@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,10 +32,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 /** Heuristic to match test targets to source files. */
 public interface TestTargetHeuristic {
@@ -77,21 +74,19 @@ public interface TestTargetHeuristic {
     Project project = element.getProject();
     ListenableFuture<Collection<TargetInfo>> targets =
         SourceToTargetFinder.findTargetInfoFuture(project, file, Optional.of(RuleType.TEST));
-    if (targets.isDone() && FuturesUtil.getIgnoringErrors(targets) == null) {
+    ListenableFuture<TargetInfo> targetFuture =
+        Futures.transform(
+            targets,
+            list ->
+                list == null
+                    ? null
+                    : TestTargetHeuristic.chooseTestTargetForSourceFile(
+                        project, psiFile, file, list, testSize),
+            MoreExecutors.directExecutor());
+    if (targetFuture.isDone() && FuturesUtil.getIgnoringErrors(targetFuture) == null) {
       return null;
     }
-    Executor executor =
-        ApplicationManager.getApplication().isUnitTestMode()
-            ? MoreExecutors.directExecutor()
-            : PooledThreadExecutor.INSTANCE;
-    return Futures.transform(
-        targets,
-        list ->
-            list == null
-                ? null
-                : TestTargetHeuristic.chooseTestTargetForSourceFile(
-                    project, psiFile, file, list, testSize),
-        executor);
+    return targetFuture;
   }
 
   /**

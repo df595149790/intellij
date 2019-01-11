@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Bazel Authors. All rights reserved.
+ * Copyright 2019 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.sdkcompat.vcs;
+package com.google.idea.blaze.base.sync;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.google.auto.value.AutoValue;
 
-/** Compat for {@link ChangesListView}. Remove when #api182 is no longer supported. */
-public final class ChangesListViewCompat {
-  private ChangesListViewCompat() {}
+/** Type of file-watcher-less VirtualFile refresh requested after blaze sync. */
+@AutoValue
+public abstract class RefreshRequestType {
 
-  // #api182
-  public static ChangesListView create(Project project) {
-    return new ChangesListView(project);
+  public static RefreshRequestType create(boolean recursive, boolean reloadChildren) {
+    return new AutoValue_RefreshRequestType(recursive, reloadChildren);
   }
+
+  abstract boolean recursive();
+
+  abstract boolean reloadChildren();
 }

@@ -65,7 +65,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
 import com.intellij.ui.components.JBCheckBox;
@@ -123,20 +122,6 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   /** The blaze-specific parts of the last serialized state of the configuration. */
   private Element blazeElementState = new Element(BLAZE_SETTINGS_TAG);
 
-  /** A not-yet-known target pattern. */
-  public static class PendingTarget {
-    public final ListenableFuture<TargetInfo> future;
-    public final PsiElement context;
-    public final String progressMessage;
-
-    public PendingTarget(
-        ListenableFuture<TargetInfo> future, PsiElement context, String progressMessage) {
-      this.future = future;
-      this.context = context;
-      this.progressMessage = progressMessage;
-    }
-  }
-
   /**
    * Used when we don't yet know all the configuration details, but want to provide a 'run/debug'
    * context action anyway.
@@ -167,6 +152,23 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
               }
             },
             MoreExecutors.directExecutor());
+  }
+
+  /**
+   * Returns true if this was previously a pending run configuration, but it turned out to be
+   * invalid. We remove these from the project periodically.
+   */
+  boolean pendingSetupFailed() {
+    PendingRunConfigurationContext pendingContext = this.pendingContext;
+    if (pendingContext == null || !pendingContext.getFuture().isDone()) {
+      return false;
+    }
+    if (targetPattern == null) {
+      return true;
+    }
+    // setup failed, but it still has useful information (perhaps the user modified it?)
+    this.pendingContext = null;
+    return false;
   }
 
   @Nullable

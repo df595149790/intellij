@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.clwb.run.test;
 
-import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
 import com.google.idea.sdkcompat.cidr.OCSymbolAdapter;
 import com.google.idea.sdkcompat.clion.CidrGoogleTestUtilAdapter;
@@ -52,18 +51,15 @@ import javax.annotation.Nullable;
 public class GoogleTestLocation extends PsiLocation<PsiElement> {
 
   public final GoogleTestSpecification gtest;
-  @Nullable public final String testFilter;
 
   GoogleTestLocation(PsiElement psi, GoogleTestSpecification gtest) {
     super(psi);
     this.gtest = gtest;
-    this.testFilter = gtest.testFilter();
   }
 
-  /** The raw test filter string with '--test_filter=' prepended, or null if there is no filter. */
   @Nullable
-  public String getTestFilterFlag() {
-    return testFilter != null ? BlazeFlags.TEST_FILTER + "=" + testFilter : null;
+  public String getTestFilter() {
+    return gtest.testFilter();
   }
 
   @Nullable

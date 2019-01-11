@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -40,6 +41,8 @@ public interface PendingRunConfigurationContext extends RunConfigurationContext 
   ListenableFuture<RunConfigurationContext> getFuture();
 
   String getProgressMessage();
+
+  ImmutableSet<ExecutorType> supportedExecutors();
 
   /**
    * Returns a future with all currently-unknown details of this configuration context resolved.

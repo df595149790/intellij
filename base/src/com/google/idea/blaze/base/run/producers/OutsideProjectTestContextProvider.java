@@ -15,10 +15,14 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.intellij.execution.Location;
@@ -38,6 +42,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.FakePsiElement;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -45,8 +50,8 @@ import javax.annotation.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 /**
- * For situations where psi elements can't be efficiently resolved. Uses rough heuristics to
- * recognize test contexts, then does everything else asynchronously.
+ * For situations where psi elements for the current file can't be efficiently resolved. Uses rough
+ * heuristics to recognize test contexts, then does everything else asynchronously.
  */
 class OutsideProjectTestContextProvider implements TestContextProvider {
 
@@ -71,17 +76,18 @@ class OutsideProjectTestContextProvider implements TestContextProvider {
     if (path == null) {
       return null;
     }
-    boolean isTestContext =
+    ImmutableSet<ExecutorType> relevantExecutors =
         Arrays.stream(HeuristicTestIdentifier.EP_NAME.getExtensions())
-            .anyMatch(h -> h.isTestContext(path));
-    if (!isTestContext) {
+            .map(h -> h.supportedExecutors(path))
+            .flatMap(Collection::stream)
+            .collect(toImmutableSet());
+    if (relevantExecutors.isEmpty()) {
       return null;
     }
     ListenableFuture<RunConfigurationContext> future =
         EXECUTOR.submit(() -> findContextAsync(resolveContext(context, vf)));
-    return TestContext.builder()
+    return TestContext.builder(psi, relevantExecutors)
         .setContextFuture(future)
-        .setSourceElement(psi)
         .setDescription(vf.getNameWithoutExtension())
         .build();
   }

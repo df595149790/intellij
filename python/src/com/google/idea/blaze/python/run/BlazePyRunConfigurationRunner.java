@@ -289,7 +289,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
         BuildResultHelperProvider.forFiles(project, file -> true)) {
 
       ListenableFuture<BuildResult> buildOperation =
-          BlazeBeforeRunCommandHelper.runBlazeBuild(
+          BlazeBeforeRunCommandHelper.runBlazeCommand(
+              BlazeCommandName.BUILD,
               configuration,
               buildResultHelper,
               BlazePyDebugHelper.getAllBlazeDebugFlags(

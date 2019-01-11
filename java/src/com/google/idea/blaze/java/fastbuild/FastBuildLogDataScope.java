@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.scope.Output;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Stores information about the fast build into a map so it can be logged by the BlazeContext
@@ -47,7 +46,7 @@ public final class FastBuildLogDataScope implements BlazeScope {
     }
 
     public static FastBuildLogOutput milliseconds(String key, Stopwatch timer) {
-      return new FastBuildLogOutput(key, Long.toString(timer.elapsed(TimeUnit.MILLISECONDS)));
+      return new FastBuildLogOutput(key, Long.toString(timer.elapsed().toMillis()));
     }
   }
 
@@ -72,9 +71,6 @@ public final class FastBuildLogDataScope implements BlazeScope {
         .ifPresent(
             s ->
                 s.logEvent(
-                    FastBuildService.class,
-                    "fast_build",
-                    logData,
-                    timer.elapsed(TimeUnit.NANOSECONDS)));
+                    FastBuildService.class, "fast_build", logData, timer.elapsed().toMillis()));
   }
 }
